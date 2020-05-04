@@ -53,6 +53,14 @@ type Controller struct {
 	Button      ButtonMap
 }
 
+func NewController(fp *os.File) *Controller {
+	return &Controller{
+		fp:          fp,
+		stopCounter: make(chan struct{}),
+		stopInput:   make(chan struct{}),
+	}
+}
+
 // Close closes all channel and device file
 func (c *Controller) Close() {
 	close(c.stopCounter)
@@ -174,7 +182,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	con := Controller{fp: fp, stopInput: make(chan struct{}), stopCounter: make(chan struct{})}
+	con := NewController(fp)
 	defer con.Close()
 	con.Connect()
 
