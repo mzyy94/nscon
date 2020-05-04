@@ -3,16 +3,17 @@
 package main
 
 import (
+	"github.com/mzyy94/nscon"
 	"log"
 	"os"
 	"os/exec"
 	"time"
-	"github.com/mzyy94/nscon"
 )
 
 func main() {
 	target := "/dev/hidg0"
-	con := nscon.NewController(target)
+	name := "procon"
+	con := nscon.NewController(target, name)
 	defer con.Close()
 	con.Connect()
 

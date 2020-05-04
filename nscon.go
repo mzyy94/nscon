@@ -4,6 +4,9 @@ package nscon
 
 import (
 	"encoding/hex"
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -31,6 +34,36 @@ var SPI_ROM_DATA = map[byte][]byte{
 	},
 }
 
+type Gadget struct {
+	name string
+}
+
+func (g Gadget) state() bool {
+	buf, err := ioutil.ReadFile(fmt.Sprintf("/sys/kernel/config/usb_gadget/%s/UDC", g.name))
+	if err != nil {
+		return false
+	}
+
+	return len(buf) > 1
+}
+
+func (g Gadget) enable() error {
+	udcs, err := ioutil.ReadDir("/sys/class/udc")
+	if err != nil {
+		return err
+	}
+	if len(udcs) == 0 {
+		return errors.New("UDC not found")
+	}
+	return ioutil.WriteFile(fmt.Sprintf("/sys/kernel/config/usb_gadget/%s/UDC", g.name),
+		[]byte(udcs[0].Name()), os.ModeCharDevice)
+}
+
+func (g Gadget) disable() error {
+	return ioutil.WriteFile(fmt.Sprintf("/sys/kernel/config/usb_gadget/%s/UDC", g.name),
+		[]byte{0x0a}, os.ModeCharDevice)
+}
+
 type ButtonMap struct {
 	Dpad struct {
 		Up, Down, Left, Right uint8
@@ -48,6 +81,7 @@ type ButtonMap struct {
 
 type Controller struct {
 	fp          *os.File
+	gadget      Gadget
 	count       uint8
 	stopCounter chan struct{}
 	stopInput   chan struct{}
@@ -55,7 +89,13 @@ type Controller struct {
 }
 
 // NewController create an instance of Controller with device path
-func NewController(path string) *Controller {
+func NewController(path string, name string) *Controller {
+	gadget := Gadget{name}
+
+	if gadget.name != "" && gadget.state() == false {
+		gadget.enable()
+	}
+
 	fp, err := os.OpenFile(path, os.O_RDWR|os.O_SYNC, os.ModeDevice)
 	if err != nil {
 		return nil
@@ -65,6 +105,7 @@ func NewController(path string) *Controller {
 		fp:          fp,
 		stopCounter: make(chan struct{}),
 		stopInput:   make(chan struct{}),
+		gadget:      gadget,
 	}
 }
 
@@ -73,6 +114,7 @@ func (c *Controller) Close() {
 	close(c.stopCounter)
 	close(c.stopInput)
 	c.fp.Close()
+	c.gadget.disable()
 }
 
 func (c *Controller) startCounter() {
