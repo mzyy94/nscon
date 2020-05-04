@@ -1,3 +1,3 @@
-module go-nscon
+module nscon
 
 go 1.14
