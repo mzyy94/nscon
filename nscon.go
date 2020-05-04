@@ -137,7 +137,7 @@ func (c *Controller) startInputReport() {
 					c.Button.Dpad.Right<<2 |
 					c.Button.Dpad.Up<<1 |
 					c.Button.Dpad.Down
-				c.write([]byte{0x30, c.count, 0x81, 0x00, 0x80, dpad, 0x00, 0x08,
+				c.write(0x30, c.count, []byte{0x81, 0x00, 0x80, dpad, 0x00, 0x08,
 					0x80, 0x00, 0x08, 0x80, 0x00})
 			case <-c.stopInput:
 				return
@@ -147,14 +147,14 @@ func (c *Controller) startInputReport() {
 }
 
 func (c *Controller) uart(ack byte, subCmd byte, data []byte) {
-	c.write(append([]byte{0x21, c.count, 0x81, 0x00, 0x80, 0x00, 0x00, 0x08,
+	c.write(0x21, c.count, append([]byte{0x81, 0x00, 0x80, 0x00, 0x00, 0x08,
 		0x80, 0x00, 0x08, 0x80, 0x00, ack, subCmd}, data...))
 }
 
-func (c *Controller) write(buf []byte) {
-	data := append(buf, make([]byte, 64-len(buf))...)
+func (c *Controller) write(ack byte, cmd byte, buf []byte) {
+	data := append(append([]byte{ack, cmd}, buf...), make([]byte, 62-len(buf))...)
 	c.fp.Write(data)
-	if c.LogLevel > 0 && buf[0] != 0x30 {
+	if c.LogLevel > 0 && ack != 0x30 {
 		log.Println("write:", hex.EncodeToString(data))
 	}
 }
@@ -194,9 +194,9 @@ func (c *Controller) Connect() error {
 			case 0x80:
 				switch buf[1] {
 				case 0x01:
-					c.write([]byte{0x81, buf[1], 0x00, 0x03, 0x00, 0x00, 0x5e, 0x00, 0x53, 0x5e})
+					c.write(0x81, buf[1], []byte{0x00, 0x03, 0x00, 0x00, 0x5e, 0x00, 0x53, 0x5e})
 				case 0x02, 0x03:
-					c.write([]byte{0x81, buf[1]})
+					c.write(0x81, buf[1], []byte{})
 				case 0x04:
 					c.startInputReport()
 				case 0x05:
