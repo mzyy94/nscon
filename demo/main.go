@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"time"
-	"nscon"
+	"github.com/mzyy94/nscon"
 )
 
 func main() {
