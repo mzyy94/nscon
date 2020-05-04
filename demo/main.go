@@ -15,9 +15,6 @@ func main() {
 	target := "/dev/hidg0"
 	name := "procon"
 	con := nscon.NewController(target, name)
-	if con == nil {
-		log.Fatal("Create controller gadget failed")
-	}
 	con.LogLevel = 2
 	defer con.Close()
 	con.Connect()

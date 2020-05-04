@@ -80,6 +80,7 @@ type ButtonMap struct {
 }
 
 type Controller struct {
+	path            string
 	fp              *os.File
 	gadget          Gadget
 	count           uint8
@@ -93,22 +94,9 @@ type Controller struct {
 // NewController create an instance of Controller with device path
 func NewController(path string, name string) *Controller {
 	gadget := Gadget{name}
-
-	if gadget.name != "" && gadget.state() == false {
-		gadget.enable()
-	}
-
-	fp, err := os.OpenFile(path, os.O_RDWR|os.O_SYNC, os.ModeDevice)
-	if err != nil {
-		return nil
-	}
-
 	return &Controller{
-		fp:              fp,
-		stopCounter:     make(chan struct{}),
-		stopInput:       make(chan struct{}),
-		stopCommunicate: make(chan struct{}),
-		gadget:          gadget,
+		path:   path,
+		gadget: gadget,
 	}
 }
 
@@ -172,7 +160,21 @@ func (c *Controller) write(buf []byte) {
 }
 
 // Connect begins connection to device
-func (c *Controller) Connect() {
+func (c *Controller) Connect() error {
+	var err error
+
+	if c.gadget.name != "" && c.gadget.state() == false {
+		c.gadget.enable()
+	}
+	c.fp, err = os.OpenFile(c.path, os.O_RDWR|os.O_SYNC, os.ModeDevice)
+	if err != nil {
+		return err
+	}
+
+	c.stopCounter = make(chan struct{})
+	c.stopInput = make(chan struct{})
+	c.stopCommunicate = make(chan struct{})
+
 	c.startCounter()
 	go func() {
 		buf := make([]byte, 128)
@@ -243,4 +245,6 @@ func (c *Controller) Connect() {
 			}
 		}
 	}()
+
+	return nil
 }
