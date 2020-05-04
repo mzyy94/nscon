@@ -125,6 +125,30 @@ func (c *Controller) startCounter() {
 	}()
 }
 
+func (c *Controller) getInputBuffer() []byte {
+	left := c.Button.Button.Y |
+		c.Button.Button.X<<1 |
+		c.Button.Button.B<<2 |
+		c.Button.Button.A<<3 |
+		c.Button.Button.R<<6 |
+		c.Button.Button.ZR<<7
+
+	center := c.Button.Button.Minus |
+		c.Button.Button.Plus<<1 |
+		c.Button.Button.Home<<4 |
+		c.Button.Button.Capture<<5
+
+	right := c.Button.Dpad.Down |
+		c.Button.Dpad.Up<<1 |
+		c.Button.Dpad.Right<<2 |
+		c.Button.Dpad.Left<<3 |
+		c.Button.Button.L<<6 |
+		c.Button.Button.ZL<<7
+
+	return []byte{0x81, left, center, right, 0x00, 0x08,
+		0x80, 0x00, 0x08, 0x80, 0x00}
+}
+
 func (c *Controller) startInputReport() {
 	ticker := time.NewTicker(time.Millisecond * 30)
 
@@ -133,12 +157,7 @@ func (c *Controller) startInputReport() {
 		for {
 			select {
 			case <-ticker.C:
-				dpad := c.Button.Dpad.Left<<3 |
-					c.Button.Dpad.Right<<2 |
-					c.Button.Dpad.Up<<1 |
-					c.Button.Dpad.Down
-				c.write(0x30, c.count, []byte{0x81, 0x00, 0x80, dpad, 0x00, 0x08,
-					0x80, 0x00, 0x08, 0x80, 0x00})
+				c.write(0x30, c.count, c.getInputBuffer())
 			case <-c.stopInput:
 				return
 			}
@@ -147,8 +166,7 @@ func (c *Controller) startInputReport() {
 }
 
 func (c *Controller) uart(ack byte, subCmd byte, data []byte) {
-	c.write(0x21, c.count, append([]byte{0x81, 0x00, 0x80, 0x00, 0x00, 0x08,
-		0x80, 0x00, 0x08, 0x80, 0x00, ack, subCmd}, data...))
+	c.write(0x21, c.count, append(append(c.getInputBuffer(), []byte{ack, subCmd}...), data...))
 }
 
 func (c *Controller) write(ack byte, cmd byte, buf []byte) {
