@@ -80,12 +80,13 @@ type ButtonMap struct {
 }
 
 type Controller struct {
-	fp          *os.File
-	gadget      Gadget
-	count       uint8
-	stopCounter chan struct{}
-	stopInput   chan struct{}
-	Button      ButtonMap
+	fp              *os.File
+	gadget          Gadget
+	count           uint8
+	stopCounter     chan struct{}
+	stopInput       chan struct{}
+	stopCommunicate chan struct{}
+	Button          ButtonMap
 }
 
 // NewController create an instance of Controller with device path
@@ -102,10 +103,11 @@ func NewController(path string, name string) *Controller {
 	}
 
 	return &Controller{
-		fp:          fp,
-		stopCounter: make(chan struct{}),
-		stopInput:   make(chan struct{}),
-		gadget:      gadget,
+		fp:              fp,
+		stopCounter:     make(chan struct{}),
+		stopInput:       make(chan struct{}),
+		stopCommunicate: make(chan struct{}),
+		gadget:          gadget,
 	}
 }
 
@@ -113,6 +115,7 @@ func NewController(path string, name string) *Controller {
 func (c *Controller) Close() {
 	close(c.stopCounter)
 	close(c.stopInput)
+	close(c.stopCommunicate)
 	c.fp.Close()
 	c.gadget.disable()
 }
@@ -174,6 +177,12 @@ func (c *Controller) Connect() {
 		buf := make([]byte, 128)
 
 		for {
+			select {
+			case <-c.stopCommunicate:
+				return
+			default:
+			}
+
 			n, err := c.fp.Read(buf)
 			log.Println("read:", hex.EncodeToString(buf[:n]), err)
 			switch buf[0] {
