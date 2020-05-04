@@ -54,7 +54,13 @@ type Controller struct {
 	Button      ButtonMap
 }
 
-func NewController(fp *os.File) *Controller {
+// NewController create an instance of Controller with device path
+func NewController(path string) *Controller {
+	fp, err := os.OpenFile(path, os.O_RDWR|os.O_SYNC, os.ModeDevice)
+	if err != nil {
+		return nil
+	}
+
 	return &Controller{
 		fp:          fp,
 		stopCounter: make(chan struct{}),

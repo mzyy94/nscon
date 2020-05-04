@@ -12,12 +12,7 @@ import (
 
 func main() {
 	target := "/dev/hidg0"
-
-	fp, err := os.OpenFile(target, os.O_RDWR|os.O_SYNC, os.ModeDevice)
-	if err != nil {
-		panic(err)
-	}
-	con := nscon.NewController(fp)
+	con := nscon.NewController(target)
 	defer con.Close()
 	con.Connect()
 
