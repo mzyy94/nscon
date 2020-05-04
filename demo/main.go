@@ -8,12 +8,16 @@ import (
 	"os"
 	"os/exec"
 	"time"
+	"os/signal"
 )
 
 func main() {
 	target := "/dev/hidg0"
 	name := "procon"
 	con := nscon.NewController(target, name)
+	if con == nil {
+		log.Fatal("Create controller gadget failed")
+	}
 	defer con.Close()
 	con.Connect()
 
@@ -22,6 +26,16 @@ func main() {
 	// Set tty break for read keyboard input directly
 	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
 	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
+
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt)
+    go func() {
+		select {
+		case <-c:
+			con.Close()
+			os.Exit(130)
+        }
+    }()
 
 	for {
 		os.Stdin.Read(buf)
