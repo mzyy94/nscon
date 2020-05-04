@@ -18,6 +18,7 @@ func main() {
 	if con == nil {
 		log.Fatal("Create controller gadget failed")
 	}
+	con.LogLevel = 2
 	defer con.Close()
 	con.Connect()
 

@@ -87,6 +87,7 @@ type Controller struct {
 	stopInput       chan struct{}
 	stopCommunicate chan struct{}
 	Button          ButtonMap
+	LogLevel        int
 }
 
 // NewController create an instance of Controller with device path
@@ -165,7 +166,7 @@ func (c *Controller) uart(ack byte, subCmd byte, data []byte) {
 func (c *Controller) write(buf []byte) {
 	data := append(buf, make([]byte, 64-len(buf))...)
 	c.fp.Write(data)
-	if buf[0] != 0x30 {
+	if c.LogLevel > 0 && buf[0] != 0x30 {
 		log.Println("write:", hex.EncodeToString(data))
 	}
 }
@@ -184,7 +185,9 @@ func (c *Controller) Connect() {
 			}
 
 			n, err := c.fp.Read(buf)
-			log.Println("read:", hex.EncodeToString(buf[:n]), err)
+			if c.LogLevel > 0 {
+				log.Println("read:", hex.EncodeToString(buf[:n]), err)
+			}
 			switch buf[0] {
 			case 0x80:
 				switch buf[1] {
@@ -214,20 +217,29 @@ func (c *Controller) Connect() {
 					if ok {
 						c.uart(0x90, buf[10], append(buf[11:16],
 							data[buf[11]:buf[11]+buf[15]]...))
-						log.Printf("Read SPI address: %02x%02x[%d] %v\n", buf[12], buf[11], buf[15], data[buf[11]:buf[11]+buf[15]])
+						if c.LogLevel > 1 {
+							log.Printf("Read SPI address: %02x%02x[%d] %v\n",
+								buf[12], buf[11], buf[15], data[buf[11]:buf[11]+buf[15]])
+						}
 					} else {
-						log.Printf("Unknown SPI address: %02x[%d]\n", buf[12], buf[15])
+						if c.LogLevel > 1 {
+							log.Printf("Unknown SPI address: %02x[%d]\n", buf[12], buf[15])
+						}
 					}
 				case 0x21:
 					c.uart(0xa0, buf[10], []byte{0x01, 0x00, 0xff, 0x00, 0x03, 0x00, 0x05, 0x01})
 				default:
-					log.Println("UART unknown request", buf[10], buf)
+					if c.LogLevel > 1 {
+						log.Println("UART unknown request", buf[10], buf)
+					}
 				}
 
 			case 0x00:
 			case 0x10:
 			default:
-				log.Println("unknown request", buf[0])
+				if c.LogLevel > 1 {
+					log.Println("unknown request", buf[0])
+				}
 			}
 		}
 	}()
