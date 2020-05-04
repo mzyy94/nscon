@@ -1,6 +1,6 @@
-# go-nscon
+# nscon
 
-Nintendo Switch Controller simulator
+Nintendo Switch Controller simulator with usb gadget
 
 ## License
 
