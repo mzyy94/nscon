@@ -103,10 +103,17 @@ func NewController(path string, name string) *Controller {
 
 // Close closes all channel and device file
 func (c *Controller) Close() {
+	if c.fp == nil {
+		if c.LogLevel > 0 {
+			log.Println("Already closed.")
+		}
+		return
+	}
 	close(c.stopCounter)
 	close(c.stopInput)
 	close(c.stopCommunicate)
 	c.fp.Close()
+	c.fp = nil
 	c.gadget.disable()
 }
 
@@ -204,6 +211,9 @@ func (c *Controller) write(ack byte, cmd byte, buf []byte) {
 // Connect begins connection to device
 func (c *Controller) Connect() error {
 	var err error
+	if c.fp != nil {
+		return errors.New("Already connected.")
+	}
 
 	if c.gadget.name != "" && c.gadget.state() == false {
 		c.gadget.enable()
