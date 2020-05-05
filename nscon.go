@@ -64,7 +64,7 @@ func (g Gadget) disable() error {
 		[]byte{0x0a}, os.ModeCharDevice)
 }
 
-type ButtonMap struct {
+type ControllerInput struct {
 	Dpad struct {
 		Up, Down, Left, Right uint8
 	}
@@ -87,7 +87,7 @@ type Controller struct {
 	stopCounter     chan struct{}
 	stopInput       chan struct{}
 	stopCommunicate chan struct{}
-	Button          ButtonMap
+	Input           ControllerInput
 	LogLevel        int
 }
 
@@ -126,24 +126,24 @@ func (c *Controller) startCounter() {
 }
 
 func (c *Controller) getInputBuffer() []byte {
-	left := c.Button.Button.Y |
-		c.Button.Button.X<<1 |
-		c.Button.Button.B<<2 |
-		c.Button.Button.A<<3 |
-		c.Button.Button.R<<6 |
-		c.Button.Button.ZR<<7
+	left := c.Input.Button.Y |
+		c.Input.Button.X<<1 |
+		c.Input.Button.B<<2 |
+		c.Input.Button.A<<3 |
+		c.Input.Button.R<<6 |
+		c.Input.Button.ZR<<7
 
-	center := c.Button.Button.Minus |
-		c.Button.Button.Plus<<1 |
-		c.Button.Button.Home<<4 |
-		c.Button.Button.Capture<<5
+	center := c.Input.Button.Minus |
+		c.Input.Button.Plus<<1 |
+		c.Input.Button.Home<<4 |
+		c.Input.Button.Capture<<5
 
-	right := c.Button.Dpad.Down |
-		c.Button.Dpad.Up<<1 |
-		c.Button.Dpad.Right<<2 |
-		c.Button.Dpad.Left<<3 |
-		c.Button.Button.L<<6 |
-		c.Button.Button.ZL<<7
+	right := c.Input.Dpad.Down |
+		c.Input.Dpad.Up<<1 |
+		c.Input.Dpad.Right<<2 |
+		c.Input.Dpad.Left<<3 |
+		c.Input.Button.L<<6 |
+		c.Input.Button.ZL<<7
 
 	return []byte{0x81, left, center, right, 0x00, 0x08,
 		0x80, 0x00, 0x08, 0x80, 0x00}
