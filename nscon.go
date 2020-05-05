@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"time"
 )
@@ -125,6 +126,14 @@ func (c *Controller) startCounter() {
 	}()
 }
 
+func packShorts(short1, short2 uint16) (data []byte) {
+	data = make([]byte, 3)
+	data[0] = uint8(short1 & 0xff)
+	data[1] = uint8(((short2 << 4) & 0xf0) | ((short1 >> 8) & 0x0f))
+	data[2] = uint8((short2 >> 4) & 0xff)
+	return data
+}
+
 func (c *Controller) getInputBuffer() []byte {
 	left := c.Input.Button.Y |
 		c.Input.Button.X<<1 |
@@ -145,8 +154,16 @@ func (c *Controller) getInputBuffer() []byte {
 		c.Input.Button.L<<6 |
 		c.Input.Button.ZL<<7
 
-	return []byte{0x81, left, center, right, 0x00, 0x08,
-		0x80, 0x00, 0x08, 0x80, 0x00}
+	lx := uint16(math.Round((1 + c.Input.Stick.Left.X) * 2048))
+	ly := uint16(math.Round((1 + c.Input.Stick.Left.Y) * 2048))
+	rx := uint16(math.Round((1 + c.Input.Stick.Right.X) * 2048))
+	ry := uint16(math.Round((1 + c.Input.Stick.Right.Y) * 2048))
+
+	leftStick := packShorts(lx, ly)
+	rightStick := packShorts(rx, ry)
+
+	return []byte{0x81, left, center, right, leftStick[0], leftStick[1],
+		leftStick[2], rightStick[0], rightStick[1], rightStick[2], 0x00}
 }
 
 func (c *Controller) startInputReport() {
