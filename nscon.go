@@ -182,8 +182,15 @@ func (c *Controller) startInputReport() {
 	}()
 }
 
-func (c *Controller) uart(ack byte, subCmd byte, data []byte) {
-	c.write(0x21, c.count, append(append(c.getInputBuffer(), []byte{ack, subCmd}...), data...))
+func (c *Controller) uart(ack bool, subCmd byte, data []byte) {
+	ackByte := byte(0x00)
+	if ack {
+		ackByte = 0x80
+		if len(data) > 0 {
+			ackByte |= subCmd
+		}
+	}
+	c.write(0x21, c.count, append(append(c.getInputBuffer(), []byte{ackByte, subCmd}...), data...))
 }
 
 func (c *Controller) write(ack byte, cmd byte, buf []byte) {
@@ -241,30 +248,32 @@ func (c *Controller) Connect() error {
 			case 0x01:
 				switch buf[10] {
 				case 0x01: // Bluetooth manual pairing
-					c.uart(0x81, buf[10], []byte{0x03, 0x01})
+					c.uart(true, buf[10], []byte{0x03, 0x01})
 				case 0x02: // Request device info
-					c.uart(0x82, buf[10], []byte{0x03, 0x48, 0x03,
+					c.uart(true, buf[10], []byte{0x03, 0x48, 0x03,
 						0x02, 0x5e, 0x53, 0x00, 0x5e, 0x00, 0x00, 0x03, 0x01})
 				case 0x03, 0x08, 0x30, 0x38, 0x40, 0x41, 0x48: // Empty response
-					c.uart(0x80, buf[10], []byte{})
+					c.uart(true, buf[10], []byte{})
 				case 0x04: // Empty response
-					c.uart(0x80, buf[10], []byte{})
+					c.uart(true, buf[10], []byte{})
 				case 0x10: // Read SPI ROM
 					data, ok := SPI_ROM_DATA[buf[12]]
 					if ok {
-						c.uart(0x90, buf[10], append(buf[11:16],
+						c.uart(true, buf[10], append(buf[11:16],
 							data[buf[11]:buf[11]+buf[15]]...))
 						if c.LogLevel > 1 {
 							log.Printf("Read SPI address: %02x%02x[%d] %v\n",
 								buf[12], buf[11], buf[15], data[buf[11]:buf[11]+buf[15]])
 						}
 					} else {
+						c.uart(false, buf[10], []byte{})
 						if c.LogLevel > 1 {
 							log.Printf("Unknown SPI address: %02x[%d]\n", buf[12], buf[15])
 						}
 					}
 				case 0x21:
-					c.uart(0xa0, buf[10], []byte{0x01, 0x00, 0xff, 0x00, 0x03, 0x00, 0x05, 0x01})
+					// FIXME: Check ack value
+					c.uart(true, buf[10], []byte{0x01, 0x00, 0xff, 0x00, 0x03, 0x00, 0x05, 0x01})
 				default:
 					if c.LogLevel > 1 {
 						log.Println("UART unknown request", buf[10], buf)
