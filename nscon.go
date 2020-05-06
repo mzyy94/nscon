@@ -113,6 +113,7 @@ func (c *Controller) Close() {
 	close(c.stopCounter)
 	close(c.stopInput)
 	close(c.stopCommunicate)
+	// TODO: Send close magic packet
 	c.fp.Close()
 	c.fp = nil
 	c.gadget.disable()
@@ -231,6 +232,11 @@ func (c *Controller) Connect() error {
 	c.stopCommunicate = make(chan struct{})
 
 	c.startCounter()
+
+	// Reset magic packet
+	c.write(0x81, 0x03, []byte{})
+	c.write(0x81, 0x01, []byte{0x00, 0x03})
+
 	go func() {
 		buf := make([]byte, 128)
 
