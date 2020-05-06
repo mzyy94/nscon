@@ -60,8 +60,8 @@ type Controller struct {
 	LogLevel        int
 }
 
-// NewController create an instance of Controller with device path
-func NewController(path string, name string) *Controller {
+// NewController creates an instance of Controller with device path
+func NewController(path string) *Controller {
 	return &Controller{
 		path: path,
 	}
