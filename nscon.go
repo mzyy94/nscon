@@ -5,8 +5,6 @@ package nscon
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -35,36 +33,6 @@ var SPI_ROM_DATA = map[byte][]byte{
 	},
 }
 
-type Gadget struct {
-	name string
-}
-
-func (g Gadget) state() bool {
-	buf, err := ioutil.ReadFile(fmt.Sprintf("/sys/kernel/config/usb_gadget/%s/UDC", g.name))
-	if err != nil {
-		return false
-	}
-
-	return len(buf) > 1
-}
-
-func (g Gadget) enable() error {
-	udcs, err := ioutil.ReadDir("/sys/class/udc")
-	if err != nil {
-		return err
-	}
-	if len(udcs) == 0 {
-		return errors.New("UDC not found")
-	}
-	return ioutil.WriteFile(fmt.Sprintf("/sys/kernel/config/usb_gadget/%s/UDC", g.name),
-		[]byte(udcs[0].Name()), os.ModeCharDevice)
-}
-
-func (g Gadget) disable() error {
-	return ioutil.WriteFile(fmt.Sprintf("/sys/kernel/config/usb_gadget/%s/UDC", g.name),
-		[]byte{0x0a}, os.ModeCharDevice)
-}
-
 type ControllerInput struct {
 	Dpad struct {
 		Up, Down, Left, Right uint8
@@ -84,7 +52,6 @@ type ControllerInput struct {
 type Controller struct {
 	path            string
 	fp              *os.File
-	gadget          Gadget
 	count           uint8
 	stopCounter     chan struct{}
 	stopInput       chan struct{}
@@ -95,10 +62,8 @@ type Controller struct {
 
 // NewController create an instance of Controller with device path
 func NewController(path string, name string) *Controller {
-	gadget := Gadget{name}
 	return &Controller{
-		path:   path,
-		gadget: gadget,
+		path: path,
 	}
 }
 
@@ -116,7 +81,6 @@ func (c *Controller) Close() {
 	// TODO: Send close magic packet
 	c.fp.Close()
 	c.fp = nil
-	c.gadget.disable()
 }
 
 func (c *Controller) startCounter() {
@@ -219,9 +183,6 @@ func (c *Controller) Connect() error {
 		return errors.New("Already connected.")
 	}
 
-	if c.gadget.name != "" && c.gadget.state() == false {
-		c.gadget.enable()
-	}
 	c.fp, err = os.OpenFile(c.path, os.O_RDWR|os.O_SYNC, os.ModeDevice)
 	if err != nil {
 		return err
