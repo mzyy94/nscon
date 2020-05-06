@@ -75,7 +75,8 @@ type ControllerInput struct {
 	}
 	Stick struct {
 		Left, Right struct {
-			X, Y float64
+			X, Y  float64
+			Press uint8
 		}
 	}
 }
@@ -151,6 +152,8 @@ func (c *Controller) getInputBuffer() []byte {
 
 	center := c.Input.Button.Minus |
 		c.Input.Button.Plus<<1 |
+		c.Input.Stick.Right.Press<<2 |
+		c.Input.Stick.Left.Press<<3 |
 		c.Input.Button.Home<<4 |
 		c.Input.Button.Capture<<5
 
