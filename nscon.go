@@ -129,10 +129,10 @@ func (c *Controller) getInputBuffer() []byte {
 		c.Input.Button.L<<6 |
 		c.Input.Button.ZL<<7
 
-	lx := uint16(math.Round((1 + c.Input.Stick.Left.X) * 2048))
-	ly := uint16(math.Round((1 + c.Input.Stick.Left.Y) * 2048))
-	rx := uint16(math.Round((1 + c.Input.Stick.Right.X) * 2048))
-	ry := uint16(math.Round((1 + c.Input.Stick.Right.Y) * 2048))
+	lx := uint16(math.Round((1 + c.Input.Stick.Left.X) * 2047.5))
+	ly := uint16(math.Round((1 + c.Input.Stick.Left.Y) * 2047.5))
+	rx := uint16(math.Round((1 + c.Input.Stick.Right.X) * 2047.5))
+	ry := uint16(math.Round((1 + c.Input.Stick.Right.Y) * 2047.5))
 
 	leftStick := packShorts(lx, ly)
 	rightStick := packShorts(rx, ry)
