@@ -22,7 +22,9 @@ func main() {
 
 	// Set tty break for read keyboard input directly
 	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
+	defer exec.Command("stty", "-F", "/dev/tty", "-cbreak").Run()
 	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
+	defer exec.Command("stty", "-F", "/dev/tty", "echo").Run()
 
 	go func() {
 		for {
