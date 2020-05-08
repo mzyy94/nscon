@@ -13,8 +13,7 @@ import (
 
 func main() {
 	target := "/dev/hidg0"
-	name := "procon"
-	con := nscon.NewController(target, name)
+	con := nscon.NewController(target)
 	con.LogLevel = 2
 	defer con.Close()
 	con.Connect()
