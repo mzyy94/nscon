@@ -107,27 +107,34 @@ func packShorts(short1, short2 uint16) (data []byte) {
 	return data
 }
 
+func bitInput(input, offset uint8) uint8 {
+	if input == 0 {
+		return 0
+	}
+	return 1 << offset
+}
+
 func (c *Controller) getInputBuffer() []byte {
-	left := c.Input.Button.Y |
-		c.Input.Button.X<<1 |
-		c.Input.Button.B<<2 |
-		c.Input.Button.A<<3 |
-		c.Input.Button.R<<6 |
-		c.Input.Button.ZR<<7
+	left := bitInput(c.Input.Button.Y, 0) |
+		bitInput(c.Input.Button.X, 1) |
+		bitInput(c.Input.Button.B, 2) |
+		bitInput(c.Input.Button.A, 3) |
+		bitInput(c.Input.Button.R, 6) |
+		bitInput(c.Input.Button.ZR, 7)
 
-	center := c.Input.Button.Minus |
-		c.Input.Button.Plus<<1 |
-		c.Input.Stick.Right.Press<<2 |
-		c.Input.Stick.Left.Press<<3 |
-		c.Input.Button.Home<<4 |
-		c.Input.Button.Capture<<5
+	center := bitInput(c.Input.Button.Minus, 0) |
+		bitInput(c.Input.Button.Plus, 1) |
+		bitInput(c.Input.Stick.Right.Press, 2) |
+		bitInput(c.Input.Stick.Left.Press, 3) |
+		bitInput(c.Input.Button.Home, 4) |
+		bitInput(c.Input.Button.Capture, 5)
 
-	right := c.Input.Dpad.Down |
-		c.Input.Dpad.Up<<1 |
-		c.Input.Dpad.Right<<2 |
-		c.Input.Dpad.Left<<3 |
-		c.Input.Button.L<<6 |
-		c.Input.Button.ZL<<7
+	right := bitInput(c.Input.Dpad.Down, 0) |
+		bitInput(c.Input.Dpad.Up, 1) |
+		bitInput(c.Input.Dpad.Right, 2) |
+		bitInput(c.Input.Dpad.Left, 3) |
+		bitInput(c.Input.Button.L, 6) |
+		bitInput(c.Input.Button.ZL, 7)
 
 	lx := uint16(math.Round((1 + c.Input.Stick.Left.X) * 2047.5))
 	ly := uint16(math.Round((1 + c.Input.Stick.Left.Y) * 2047.5))
