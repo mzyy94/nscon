@@ -178,8 +178,14 @@ func (c *Controller) uart(ack bool, subCmd byte, data []byte) {
 func (c *Controller) write(ack byte, cmd byte, buf []byte) {
 	data := append(append([]byte{ack, cmd}, buf...), make([]byte, 62-len(buf))...)
 	c.fp.Write(data)
-	if c.LogLevel > 0 && ack != 0x30 {
-		log.Println("write:", hex.EncodeToString(data))
+	if c.LogLevel > 0 {
+		if ack == 0x30 {
+			if c.LogLevel > 2 {
+				log.Println("write:", hex.EncodeToString(data))
+			}
+		} else {
+			log.Println("write:", hex.EncodeToString(data))
+		}
 	}
 }
 
