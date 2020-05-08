@@ -11,6 +11,13 @@ import (
 	"time"
 )
 
+func setInput(input *uint8) {
+	*input++
+	time.AfterFunc(100*time.Millisecond, func() {
+		*input--
+	})
+}
+
 func main() {
 	target := "/dev/hidg0"
 	con := nscon.NewController(target)
@@ -31,57 +38,40 @@ func main() {
 			os.Stdin.Read(buf)
 			switch buf[0] {
 			case 'a':
-				con.Input.Dpad.Left = 1
+				setInput(&con.Input.Dpad.Left)
 			case 'd':
-				con.Input.Dpad.Right = 1
+				setInput(&con.Input.Dpad.Right)
 			case 'w':
-				con.Input.Dpad.Up = 1
+				setInput(&con.Input.Dpad.Up)
 			case 's':
-				con.Input.Dpad.Down = 1
+				setInput(&con.Input.Dpad.Down)
 			case ' ':
-				con.Input.Button.B = 1
+				setInput(&con.Input.Button.B)
 			case 0x0a: // Enter
-				con.Input.Button.A = 1
+				setInput(&con.Input.Button.A)
 			case '.':
-				con.Input.Button.X = 1
+				setInput(&con.Input.Button.X)
 			case '/':
-				con.Input.Button.Y = 1
+				setInput(&con.Input.Button.Y)
 			case 0x1b: // Escape
-				con.Input.Button.Home = 1
+				setInput(&con.Input.Button.Home)
 			case '`':
-				con.Input.Button.Capture = 1
+				setInput(&con.Input.Button.Capture)
 			case '	':
-				con.Input.Button.ZL = 1
+				setInput(&con.Input.Button.ZL)
 			case 'q':
-				con.Input.Button.L = 1
+				setInput(&con.Input.Button.L)
 			case ']':
-				con.Input.Button.R = 1
+				setInput(&con.Input.Button.R)
 			case '\\':
-				con.Input.Button.ZL = 1
+				setInput(&con.Input.Button.ZL)
 			case 'g':
-				con.Input.Button.Plus = 1
+				setInput(&con.Input.Button.Plus)
 			case 'f':
-				con.Input.Button.Minus = 1
+				setInput(&con.Input.Button.Minus)
 			default:
 				log.Printf("unknown: %c = 0x%02x\n", buf[0], buf[0])
 			}
-			time.Sleep(50 * time.Millisecond)
-			con.Input.Dpad.Left = 0
-			con.Input.Dpad.Right = 0
-			con.Input.Dpad.Up = 0
-			con.Input.Dpad.Down = 0
-			con.Input.Button.A = 0
-			con.Input.Button.B = 0
-			con.Input.Button.X = 0
-			con.Input.Button.Y = 0
-			con.Input.Button.L = 0
-			con.Input.Button.R = 0
-			con.Input.Button.ZL = 0
-			con.Input.Button.ZR = 0
-			con.Input.Button.Plus = 0
-			con.Input.Button.Minus = 0
-			con.Input.Button.Home = 0
-			con.Input.Button.Capture = 0
 		}
 	}()
 
